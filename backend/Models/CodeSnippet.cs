@@ -1,4 +1,4 @@
-﻿namespace WcagLearner.Models;
+﻿namespace WCAGQuizer.Models;
 public class CodeSnippet
 {
     public int Id { get; set; }

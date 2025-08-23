@@ -1,4 +1,4 @@
-using WcagQuizer.Data;
+using WCAGQuizer.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

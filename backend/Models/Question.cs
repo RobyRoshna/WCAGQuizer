@@ -1,5 +1,5 @@
 ﻿
-namespace WcagLearner.Models;
+namespace WCAGQuizer.Models;
 public class Question
 {
     public int Id { get; set; }

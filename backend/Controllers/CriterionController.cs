@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using WCAGQuizer.Data;
 using WCAGQuizer.Models;
 
-namespace WcagLearner.Controllers;
+namespace WCAGQuizer.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

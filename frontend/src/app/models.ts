@@ -43,19 +43,8 @@ export interface QuizQuestion {
   options?: QuizOption[];
 }
 
-export interface QuizSubmitAnswer {
-  questionId: number;
-  selectedOptionIds?: number[];
-  freeText?: string | null;
-}
 
-export interface QuizSubmitPayload {
-  criterionId: number;
-  answers: QuizSubmitAnswer[];
-}
+export interface QuizSubmitAnswer { questionId: number; selectedOptionIds?: number[]; textAns?: string; }
+export interface QuizSubmitPayload { criterionId: number; answers: QuizSubmitAnswer[]; }
 
-export interface QuizResult {
-  total: number;
-  score: number;
-  feedback: { questionId: number; correct: boolean; explanation?: string }[];
-}
+export interface QuizResult { total: number; score: number; feedback: { questionId: number; correct: boolean; explanation?: string }[]; }

@@ -1,0 +1,41 @@
+<section class="mx-auto max-w-6xl px-4 py-8">
+  <h2 class="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">
+    WCAG Criteria Available Currently
+  </h2>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    @for (c of criteria; track c.id) {
+      <a
+        [routerLink]="['/criteria', c.id]"
+        class="group block rounded-lg px-6 py-5 shadow-xl ring ring-gray-900/5
+               bg-white text-gray-900
+               hover:bg-gray-50 hover:ring-indigo-500
+               dark:bg-gray-800 dark:text-gray-50
+               dark:ring-white/10 dark:hover:bg-gray-700 dark:hover:ring-white/20
+               transition-colors focus-visible:outline-none
+               focus-visible:ring-2 focus-visible:ring-indigo-500
+               focus-visible:ring-offset-2 focus-visible:ring-offset-white
+               dark:focus-visible:ring-offset-gray-900"
+      >
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+          
+            <h3 class="text-base font-medium tracking-tight">
+              {{ c.code }} — {{ c.name }}
+            </h3>
+          </div>
+
+          <span class="rounded-full border px-2 py-0.5 text-xs
+                       border-gray-300 bg-gray-100 text-gray-800
+                       dark:border-gray-500 dark:bg-gray-700 dark:text-gray-100">
+            Level {{ c.level }}
+          </span>
+        </div>
+
+        <p class="mt-3 text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+          {{ c.description }}
+        </p>
+      </a>
+    }
+  </div>
+</section>

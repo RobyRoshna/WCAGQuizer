@@ -1,0 +1,82 @@
+<section class="mx-auto max-w-3xl px-4 py-8">
+  <h2 class="mb-4 text-2xl font-semibold">Quiz</h2>
+
+  @if (questions?.length) {
+    <form (ngSubmit)="submit()" class="space-y-4">
+      @for (q of questions; track q.id) {
+        <div class="rounded-xl border border-zinc-700 p-4">
+          <h4 class="mb-2 font-medium">{{ q.text }}</h4>
+
+          @switch (q.type) {
+            @case ('single') {
+              @for (o of q.options; track o.id) {
+                <label class="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    [name]="'q' + q.id"
+                    class="rounded border-zinc-600"
+                    [value]="o.id"
+                    [(ngModel)]="answers[q.id].single"
+                  />
+                  {{ o.text }}
+                </label>
+              }
+            }
+
+            @case ('multi') {
+              @for (o of q.options; track o.id) {
+                <label class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    class="rounded border-zinc-600"
+                    [ngModel]="answers[q.id].multi.has(o.id)"
+                    (ngModelChange)="toggle(q.id, o.id, $event)"
+                  />
+                  {{ o.text }}
+                </label>
+              }
+            }
+
+            @case ('fill') {
+              <input
+                type="text"
+                class="w-full rounded-md border border-zinc-600 bg-zinc-900 p-2"
+                [(ngModel)]="answers[q.id].fill"
+                [name]="'f' + q.id"
+                placeholder="Your answer..."
+              />
+            }
+          }
+        </div>
+      }
+
+      <button
+        class="rounded-lg border border-zinc-600 px-4 py-2 hover:bg-zinc-800"
+        type="submit">
+        Submit
+      </button>
+    </form>
+  }
+
+  @if (result) {
+    <div class="mt-6 rounded-xl border border-zinc-700 p-4">
+      <h3 class="text-lg font-medium">
+        Score: {{ result.score }} / {{ result.total }}
+      </h3>
+
+      @for (f of result.feedback; track f.questionId) {
+        <div class="mt-2">
+          <p>
+            <span class="font-medium">Q{{ f.questionId }}</span> —
+            <strong [class]="f.correct ? 'text-emerald-400' : 'text-rose-400'">
+              {{ f.correct ? 'Correct' : 'Try again' }}
+            </strong>
+          </p>
+          @if (f.explanation) {
+            <p class="text-sm text-zinc-300">{{ f.explanation }}</p>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

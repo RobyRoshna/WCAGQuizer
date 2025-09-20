@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WCAGQuizer.Data;
+using WCAGQuizer.DTOs;
 using WCAGQuizer.Models;
 
 namespace WCAGQuizer.Controllers;
@@ -9,52 +10,73 @@ namespace WCAGQuizer.Controllers;
 [Route("api/[controller]")]
 public class QuizController(AppDbContext db) : ControllerBase
 {
+    // POST /api/quiz/submit
     [HttpPost("submit")]
-    public async Task<IActionResult> Submit([FromBody] QuizSubmitDto payload)
+    public async Task<ActionResult<QuizResultDto>> Submit([FromBody] QuizSubmitDto payload)
     {
+        // Fetch the involved questions (type + explanation + criterion)
+        var qIds = payload.Answers.Select(a => a.QuestionId).Distinct().ToList();
+
         var questions = await db.QuizQuestions
-            .Include(q => q.Options)
-            .Where(q => q.CriterionId == payload.CriterionId)
+            .AsNoTracking()
+            .Where(q => qIds.Contains(q.Id))
+            .Select(q => new { q.Id, q.CriterionId, q.Type, q.Explanation })
             .ToListAsync();
 
-        int score = 0;
-        var feedback = new List<object>();
+        if (questions.Count != qIds.Count)
+            return BadRequest("One or more question IDs are invalid.");
+
+        // Ensure all questions belong to the submitted criterion
+        if (questions.Any(q => q.CriterionId != payload.CriterionId))
+            return BadRequest("Submitted answers contain questions from a different criterion.");
+
+        // Map of correct option IDs per question
+        var correct = await db.AnswerOptions
+            .AsNoTracking()
+            .Where(a => qIds.Contains(a.QuizQuestionId) && a.IsCorrect)
+            .GroupBy(a => a.QuizQuestionId)
+            .Select(g => new { QuestionId = g.Key, CorrectIds = g.Select(a => a.Id).ToList() })
+            .ToListAsync();
+
+        var correctMap = correct.ToDictionary(x => x.QuestionId, x => x.CorrectIds);
+
+        int correctCount = 0;
+        var details = new List<QuizFeedbackDto>();
 
         foreach (var ans in payload.Answers)
         {
-            var question = questions.First(q => q.Id == ans.QuestionId);
-            bool correct = false;
+            var meta = questions.First(q => q.Id == ans.QuestionId);
+            var selected = (ans.SelectedOptionIds ?? new()).Distinct().OrderBy(x => x).ToList();
+            var correctIds = correctMap.TryGetValue(ans.QuestionId, out var ids)
+                ? ids.OrderBy(x => x).ToList()
+                : new List<int>();
 
-            if (question.Type == "fill")
+            bool isCorrect = meta.Type switch
             {
-                // Test!!!!!!!: does free Text contain "alt"
-                correct = !string.IsNullOrWhiteSpace(ans.TextAns) &&
-                          ans.TextAns.Contains("alt", StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                var correctIds = question.Options.Where(o => o.IsCorrect)
-                                                 .Select(o => o.Id)
-                                                 .ToHashSet();
-                var givenIds = ans.SelectedOptionIds?.ToHashSet() ?? new HashSet<int>();
-                correct = correctIds.SetEquals(givenIds);
-            }
+                "single" => selected.Count == 1 && correctIds.Count == 1 && selected[0] == correctIds[0],
+                "multi" => selected.SequenceEqual(correctIds),
+                "fill" => false, // optional: implement text grading against AnswerOption.Text
+                _ => false
+            };
 
-            if (correct) score++;
+            if (isCorrect) correctCount++;
 
-            feedback.Add(new
-            {
-                questionId = question.Id,
-                correct,
-                explanation = question.Explanation
-            });
+            details.Add(new QuizFeedbackDto(
+                QuestionId: ans.QuestionId,
+                SelectedOptionIds: selected,
+                CorrectOptionIds: correctIds,
+                IsCorrect: isCorrect,
+                Explanation: meta.Explanation
+            ));
         }
 
-        return Ok(new
-        {
-            total = questions.Count,
-            score,
-            feedback
-        });
+        var result = new QuizResultDto(
+            CriterionId: payload.CriterionId,
+            TotalQuestions: payload.Answers.Count,
+            Correct: correctCount,
+            Details: details
+        );
+
+        return Ok(result);
     }
 }

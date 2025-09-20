@@ -1,4 +1,4 @@
-﻿namespace WCAGQuizer.Models;
+﻿namespace WCAGQuizer.DTOs;
 public class QuizSubmitDto
 {
     public int CriterionId { get; set; }
